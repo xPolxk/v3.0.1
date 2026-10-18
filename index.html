@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#DCEBF3" id="metaTheme">
+<title>Souffle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:wght@400..600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --font-d:'Bricolage Grotesque',ui-rounded,system-ui,sans-serif;
+  --font-b:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --sky-top:#DCEBF3; --sky-bot:#F5F9FA; --smog:#B9AE99;
+  --ink:#15303C; --muted:#557080; --line:rgba(21,48,60,.16);
+  --panel:rgba(255,255,255,.65); --solid:#FFFFFF; --bar:rgba(255,255,255,.92);
+  --air:#127A6B; --on-air:#FFFFFF; --dawn:#D9861A; --on-dawn:#1C1408; --danger:#B8402F;
+}
+[data-theme="dark"]{
+  --sky-top:#0F2A3A; --sky-bot:#0B1B27; --smog:#7C725F;
+  --ink:#EAF4F7; --muted:#9DB6C1; --line:rgba(234,244,247,.16);
+  --panel:rgba(255,255,255,.06); --solid:#14303F; --bar:rgba(15,42,58,.94);
+  --air:#5FD3BF; --on-air:#07231F; --dawn:#FFB85C; --on-dawn:#1C1408; --danger:#FF8A78;
+}
+*{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--font-b);color:var(--ink);background:var(--sky-bot);min-height:100vh;line-height:1.5;font-size:16px}
+.sky{position:fixed;inset:0;z-index:-2;background:linear-gradient(180deg,var(--sky-top),var(--sky-bot) 70%)}
+.haze{position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(130% 80% at 50% -10%,var(--smog),transparent 65%);opacity:var(--haze,.5);transition:opacity 2s}
+main{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 24px) 20px calc(170px + env(safe-area-inset-bottom,0px))}
+.tab{display:none}
+.tab.active{display:block}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.muted{color:var(--muted)}
+.hint{color:var(--muted);font-size:.85rem;font-weight:400}
+h1.page-t{font-family:var(--font-d);font-size:2rem;font-weight:800;letter-spacing:-.02em;line-height:1.1;margin-bottom:8px}
+.block{margin-top:30px}
+.block>h2,.tab>h2{font-family:var(--font-d);font-size:1.3rem;font-weight:700;margin:30px 0 10px;letter-spacing:-.01em}
+
+/* Boutons et champs */
+.btn{font:inherit;font-weight:600;border:1px solid var(--line);background:transparent;color:var(--ink);padding:11px 18px;border-radius:999px;cursor:pointer;min-height:44px}
+.btn:hover{filter:brightness(1.08)}
+.btn.primary{background:var(--air);border-color:var(--air);color:var(--on-air)}
+.btn.danger{color:var(--danger);border-color:currentColor}
+.btn.quiet{border-color:transparent;color:var(--muted)}
+.btn.sm{min-height:36px;padding:6px 12px;font-size:.85rem}
+.btn[aria-pressed="true"]{border-color:var(--air);color:var(--air)}
+:focus-visible{outline:3px solid var(--dawn);outline-offset:2px}
+label{display:grid;gap:6px;font-weight:600;font-size:.92rem;margin-top:14px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-height:44px;width:100%}
+input[type=color]{padding:3px;height:44px;cursor:pointer}
+textarea{min-height:110px;resize:vertical}
+input[type=checkbox],input[type=radio]{width:auto;min-height:0}
+.row-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+.star{font:inherit;font-size:1.4rem;line-height:1;background:none;border:0;color:var(--dawn);cursor:pointer;min-width:44px;min-height:44px}
+
+/* Accueil */
+.hero{display:grid;justify-items:center;text-align:center;padding-top:6px}
+.ring{position:relative;width:min(78vw,300px);aspect-ratio:1}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .track{stroke:var(--line)}
+.ring .prog{stroke:var(--air);stroke-linecap:round;transition:stroke-dashoffset 1s}
+.ring-in{position:absolute;inset:0;display:grid;place-content:center;justify-items:center}
+.big{font-family:var(--font-d);font-weight:800;font-size:clamp(84px,25vw,132px);line-height:.9;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.unit{color:var(--muted);margin-top:8px}
+.hms{font-family:var(--font-d);font-size:1.35rem;font-weight:600;font-variant-numeric:tabular-nums;margin-top:18px}
+.since{color:var(--muted);font-size:.9rem;margin-top:2px}
+.totals{display:grid;grid-template-columns:repeat(3,1fr);margin-top:30px;border-block:1px solid var(--line)}
+.totals>div{padding:16px 6px;text-align:center}
+.totals>div+div{border-left:1px solid var(--line)}
+.totals b{display:block;font-family:var(--font-d);font-size:1.45rem;font-weight:700;font-variant-numeric:tabular-nums}
+.totals span{color:var(--muted);font-size:.82rem;display:block;line-height:1.3}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin:10px 0 6px}
+.bar i{display:block;height:100%;background:var(--air);border-radius:inherit;transition:width .8s}
+.empty{text-align:center;padding:60px 0}
+.empty h1{font-family:var(--font-d);font-size:2rem;font-weight:800;letter-spacing:-.02em;margin-bottom:8px}
+.empty .btn{margin-top:20px}
+.fav-line{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.fav-line span{color:var(--muted);text-align:right}
+
+/* Bouton d'envie et barre d'onglets */
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:20;font:inherit;font-weight:700;font-size:1.02rem;background:var(--dawn);color:var(--on-dawn);border:0;border-radius:999px;padding:14px 26px;min-height:48px;cursor:pointer;box-shadow:0 6px 22px rgba(0,0,0,.22)}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--bar);border-top:1px solid var(--line);backdrop-filter:blur(10px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabbar div{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr)}
+.tabbar button{font:inherit;font-size:.7rem;font-weight:500;background:none;border:0;color:var(--muted);display:grid;justify-items:center;gap:3px;padding:9px 0 8px;min-height:56px;cursor:pointer}
+.tabbar button[aria-selected="true"]{color:var(--air);font-weight:600}
+.tabbar svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* Corps */
+.tl{list-style:none;padding:0;margin-top:22px}
+.tl li{display:grid;grid-template-columns:22px 1fr;column-gap:14px;padding-bottom:24px;position:relative}
+.tl li::before{content:'';position:absolute;left:10px;top:24px;bottom:2px;width:2px;background:var(--line)}
+.tl li:last-child::before{display:none}
+.tl li.done::before{background:var(--air)}
+.tl .dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);background:var(--sky-bot);display:grid;place-items:center;color:var(--on-air)}
+.tl li.done .dot{background:var(--air);border-color:var(--air)}
+.tl li.cur .dot{border-color:var(--dawn)}
+.tl b{font-family:var(--font-d);font-size:1.05rem}
+.tl p{color:var(--muted)}
+.tl li.done p{color:var(--ink)}
+
+/* Trophées */
+.feature{display:flex;gap:18px;align-items:center;padding:18px 0;border-block:1px solid var(--line);margin-top:20px}
+.feature .badge{width:104px;flex:none}
+.feature h3{font-family:var(--font-d);font-size:1.2rem;margin-bottom:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:22px 12px}
+.tile{font:inherit;color:inherit;background:none;border:0;cursor:pointer;display:grid;justify-items:center;gap:4px;text-align:center;padding:4px}
+.tile .badge{width:92px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.18))}
+.tile.locked .badge{filter:none}
+.tile b{font-size:.9rem;line-height:1.2}
+.tile span{font-size:.78rem;color:var(--muted)}
+.tile.locked b{color:var(--muted)}
+.badge{display:block}
+.rw{padding:14px 0;border-bottom:1px solid var(--line)}
+.rw-h{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.rw-h b{font-family:var(--font-d)}
+.rw-a{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.add-rw{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;margin-top:6px}
+.add-rw label:first-child{grid-column:1/-1}
+
+/* Suivi */
+.moods{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.mood{font:inherit;display:grid;justify-items:center;gap:2px;padding:10px 4px;border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--ink);cursor:pointer;min-height:64px}
+.mood .em{font-size:1.6rem;line-height:1.1}
+.mood span:last-child{font-size:.8rem;color:var(--muted)}
+.mood[aria-pressed="true"]{border-color:var(--air);box-shadow:inset 0 0 0 1px var(--air)}
+.strip{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;margin-top:16px}
+.strip-c{display:grid;gap:2px}
+.strip .em{font-size:1.3rem}
+.strip .wd{font-size:.75rem;color:var(--muted)}
+.bars{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;height:110px;margin-top:14px}
+.bars .col{display:grid;grid-template-rows:1fr auto auto;height:100%;text-align:center;font-size:.75rem;color:var(--muted);justify-items:center;gap:2px}
+.bars .col div{align-self:end;width:100%;max-width:26px;background:var(--air);border-radius:6px 6px 2px 2px;min-height:3px}
+.bars .col .n{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+.jr-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.jr{padding:12px 0;border-bottom:1px solid var(--line)}
+.jr-h{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--muted);font-size:.85rem}
+.jr p{white-space:pre-wrap;margin-top:2px;overflow-wrap:anywhere}
+.slip{padding:12px 0;border-bottom:1px solid var(--line)}
+
+/* Coach */
+.chat{display:grid;gap:10px;margin-top:16px}
+.msg{max-width:88%;padding:10px 14px;border-radius:18px;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.user{justify-self:end;background:var(--air);color:var(--on-air);border-bottom-right-radius:6px}
+.msg.assistant{justify-self:start;background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:6px}
+.msg.typing{color:var(--muted)}
+.chat-in{display:grid;gap:8px;margin-top:16px}
+.chat-in textarea{min-height:76px}
+
+/* Réglages */
+.seg{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+.seg label{display:flex;align-items:center;gap:6px;margin:0;font-weight:500;border:1px solid var(--line);border-radius:999px;padding:8px 14px;min-height:44px;cursor:pointer}
+.seg label:has(input:checked){border-color:var(--air);color:var(--air);font-weight:600}
+.check{display:flex;align-items:center;gap:10px;margin-top:16px;font-weight:500}
+.check input{width:20px;height:20px}
+.set-block{padding-bottom:26px;border-bottom:1px solid var(--line)}
+.presets{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.preset{font:inherit;font-weight:600;font-size:.85rem;height:58px;border-radius:14px;border:2px solid var(--line);cursor:pointer;display:grid;align-items:end;justify-items:start;padding:6px 9px}
+.preset[aria-pressed="true"]{border-color:var(--air);box-shadow:0 0 0 2px var(--air)}
+.pickers{display:grid;grid-template-columns:repeat(3,1fr);gap:0 10px}
+
+/* Dialogues, toast */
+dialog{border:1px solid var(--line);border-radius:22px;background:var(--solid);color:var(--ink);padding:24px;width:min(92vw,440px);max-height:88vh;overflow:auto;margin:auto}
+dialog::backdrop{background:rgba(6,18,26,.6);backdrop-filter:blur(3px)}
+dialog h2{font-family:var(--font-d);font-size:1.4rem;line-height:1.2;margin-bottom:8px}
+dialog p+p{margin-top:8px}
+.dlg-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:20px}
+.dlg-badge{display:grid;justify-items:center;margin-bottom:10px}
+.dlg-badge .badge{width:150px;filter:drop-shadow(0 6px 12px rgba(0,0,0,.22))}
+.toast{position:fixed;top:calc(env(safe-area-inset-top,0px) + 14px);left:50%;transform:translate(-50%,-20px);background:var(--ink);color:var(--sky-bot);padding:10px 18px;border-radius:999px;font-weight:500;font-size:.92rem;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:60;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:70}
+
+/* Mode envie */
+.cv{position:fixed;inset:0;z-index:50;display:flex;justify-content:center;overflow:auto;
+  --ink:#EAF4F7;--muted:#A9C0CA;--line:rgba(234,244,247,.2);--air:#5FD3BF;--on-air:#07231F;
+  color:var(--ink);background:radial-gradient(120% 80% at 50% 30%,#164A57,#0B1E2B 70%)}
+.cv[hidden]{display:none}
+.cv-in{width:100%;max-width:460px;padding:calc(env(safe-area-inset-top,0px) + 28px) 24px calc(env(safe-area-inset-bottom,0px) + 28px);display:grid;align-content:center;justify-items:center;text-align:center;gap:16px}
+.cv-intro{color:var(--muted)}
+.cv-stage{position:relative;width:230px;height:230px;display:grid;place-items:center}
+.cv-circle{width:230px;height:230px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#8CEBDB,#2FA792 60%,#1D7D6E);transform:scale(.55)}
+.cv-cue{position:absolute;font-family:var(--font-d);font-size:1.6rem;font-weight:700;color:#052721}
+.cv-time{font-family:var(--font-d);font-size:2.2rem;font-weight:700;font-variant-numeric:tabular-nums}
+.cv-tip{min-height:3em;font-size:1.05rem}
+.cv-why{border-top:1px solid var(--line);padding-top:14px;width:100%;color:var(--muted);font-size:.95rem;white-space:pre-wrap}
+.cv-why b{display:block;color:var(--ink);margin-bottom:4px;font-family:var(--font-d)}
+.cv-actions{display:flex;flex-direction:column;gap:8px;width:100%;margin-top:6px}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+<div class="sky" aria-hidden="true"></div>
+<div class="haze" aria-hidden="true"></div>
+
+<main>
+  <!-- ACCUEIL -->
+  <section class="tab active" id="tab-home" aria-label="Accueil">
+    <h1 class="sr">Souffle, compteur d'arrêt</h1>
+    <div id="homeEmpty" class="empty" hidden>
+      <h1>Ton compteur démarre ici.</h1>
+      <p class="muted">Choisis la date et l'heure de ta dernière consommation.</p>
+      <button class="btn primary" data-action="start">Commencer</button>
+    </div>
+    <div id="homeMain">
+      <div class="hero">
+        <div class="ring">
+          <svg viewBox="0 0 300 300" aria-hidden="true">
+            <circle class="track" cx="150" cy="150" r="136" fill="none" stroke-width="10"/>
+            <circle class="prog" id="ringProg" cx="150" cy="150" r="136" fill="none" stroke-width="10" stroke-dasharray="854.5" stroke-dashoffset="854.5"/>
+          </svg>
+          <div class="ring-in">
+            <span class="big" id="hDays">0</span>
+            <span class="unit" id="hUnit">jour sans fumer</span>
+          </div>
+        </div>
+        <p class="hms" id="hHms">00 h 00 min 00 s</p>
+        <p class="since" id="hSince"></p>
+      </div>
+      <div class="totals">
+        <div><b id="tGrams">0 g</b><span>évités depuis le départ</span></div>
+        <div><b id="tEuros">0 €</b><span>économisés</span></div>
+        <div><b id="tYear">0 €</b><span>sur un an, au rythme d'avant</span></div>
+      </div>
+      <div class="block">
+        <h2>Prochain trophée</h2>
+        <p id="nextTxt"></p>
+        <div class="bar"><i id="nextBar" style="width:0%"></i></div>
+        <p class="hint" id="recordTxt"></p>
+      </div>
+      <div class="block" id="homeDates" hidden>
+        <h2>Mes dates</h2>
+        <div id="homeDatesList"></div>
+      </div>
+      <div class="row-actions">
+        <button class="btn" data-action="share">Partager mon compteur</button>
+        <button class="btn danger" data-action="slip">J'ai craqué</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CORPS -->
+  <section class="tab" id="tab-body" aria-label="Ton corps">
+    <h1 class="page-t">Ton corps récupère</h1>
+    <p class="muted" id="bodyLead"></p>
+    <ol class="tl" id="bodyList"></ol>
+    <p class="hint">Ce sont des repères généraux : les données sur le cannabis sont moins nombreuses que sur le tabac, et chaque organisme avance à son rythme. Ne plus inhaler de fumée aide les poumons à cicatriser. Pour ton suivi, ton médecin reste la référence.</p>
+
+    <h2>Mes dates</h2>
+    <p class="muted">Les dates qui comptent dans ton histoire. Mets une étoile pour les voir sur l'accueil, ou utilise-en une comme date de départ.</p>
+    <div id="datesList"></div>
+    <div class="add-rw">
+      <label for="dtLabel">Nom<input id="dtLabel" type="text" maxlength="60" placeholder="Fin de la kiné, contrôle, ..."></label>
+      <label for="dtWhen" style="grid-column:1/-1">Date<input id="dtWhen" type="datetime-local"></label>
+    </div>
+    <div class="row-actions"><button class="btn primary" data-action="addDate">Ajouter la date</button></div>
+  </section>
+
+  <!-- TROPHEES -->
+  <section class="tab" id="tab-trophies" aria-label="Trophées">
+    <h1 class="page-t">Trophées</h1>
+    <div id="trFeature"></div>
+    <h2>Durée</h2>
+    <div class="grid" id="trDays"></div>
+    <h2>Envies traversées</h2>
+    <div class="grid" id="trCrav"></div>
+    <h2>Mes récompenses</h2>
+    <p class="muted">Fixe-toi une récompense à t'offrir avec l'argent économisé ou après un certain nombre de jours.</p>
+    <div id="trCustom"></div>
+    <div class="add-rw">
+      <label for="rwLabel">Ma récompense<input id="rwLabel" type="text" maxlength="80" placeholder="Un resto, des baskets, un week-end..."></label>
+      <label for="rwKind">Quand<select id="rwKind"><option value="euros">Euros économisés</option><option value="days">Jours d'arrêt</option></select></label>
+      <label for="rwTarget">Objectif<input id="rwTarget" type="number" min="1" step="any" inputmode="decimal" placeholder="200"></label>
+    </div>
+    <div class="row-actions"><button class="btn primary" data-action="addReward">Ajouter la récompense</button></div>
+  </section>
+
+  <!-- SUIVI -->
+  <section class="tab" id="tab-track" aria-label="Suivi">
+    <h1 class="page-t">Suivi</h1>
+    <h2>Humeur du jour</h2>
+    <div class="moods" id="moodBtns">
+      <button class="mood" data-action="mood" data-value="4" aria-pressed="false"><span class="em">😊</span><span>Bien</span></button>
+      <button class="mood" data-action="mood" data-value="3" aria-pressed="false"><span class="em">😐</span><span>Bof</span></button>
+      <button class="mood" data-action="mood" data-value="2" aria-pressed="false"><span class="em">😔</span><span>Bas</span></button>
+      <button class="mood" data-action="mood" data-value="1" aria-pressed="false"><span class="em">😡</span><span>Tendu</span></button>
+    </div>
+    <div class="strip" id="moodStrip"></div>
+
+    <h2>Envies</h2>
+    <p id="cravSummary"></p>
+    <div class="bars" id="cravBars"></div>
+    <p class="muted" id="cravInsight" style="margin-top:12px"></p>
+
+    <div class="jr-top"><h2 style="margin:30px 0 10px">Journal</h2><button class="btn sm" id="favFilter" data-action="favFilter" aria-pressed="false">★ Favoris</button></div>
+    <label for="journalText" class="sr">Nouvelle note</label>
+    <textarea id="journalText" maxlength="2000" placeholder="Comment ça se passe aujourd'hui ? Qu'est-ce qui a été dur, ou facile ?"></textarea>
+    <div class="row-actions"><button class="btn primary" data-action="saveJournal">Enregistrer la note</button></div>
+    <div id="journalList"></div>
+
+    <div id="slipsBlock" hidden>
+      <h2>Les fois où ça a craqué</h2>
+      <p class="muted">Repérer ce qui déclenche aide à mieux se préparer.</p>
+      <div id="slipsList"></div>
+    </div>
+  </section>
+
+  <!-- COACH -->
+  <section class="tab" id="tab-coach" aria-label="Coach">
+    <h1 class="page-t">Coach</h1>
+    <div id="coachOff" hidden>
+      <p class="muted">Le coach n'est pas encore branché. Il faut un petit serveur intermédiaire qui garde ta clé secrète (le fichier <b>coach-worker.js</b> est prévu pour ça, 5 minutes sur Cloudflare Workers). Colle ensuite son adresse dans les réglages.</p>
+      <div class="row-actions"><button class="btn primary" data-action="toSettings">Aller aux réglages</button></div>
+    </div>
+    <div id="coachOn" hidden>
+      <p class="muted">Un coach qui connaît ton compteur, tes envies et tes raisons. Il t'écoute, il ne remplace pas un médecin.</p>
+      <div class="chat" id="chatLog" aria-live="polite"></div>
+      <div class="chat-in">
+        <label for="chatText" class="sr">Ton message</label>
+        <textarea id="chatText" maxlength="2000" placeholder="Écris ce qui se passe, ou ce que tu ressens..."></textarea>
+        <div class="row-actions" style="margin-top:0">
+          <button class="btn primary" id="chatSend" data-action="sendChat">Envoyer</button>
+          <button class="btn quiet" data-action="clearChat">Effacer la conversation</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REGLAGES -->
+  <section class="tab" id="tab-settings" aria-label="Réglages">
+    <h1 class="page-t">Réglages</h1>
+
+    <div class="set-block">
+      <label for="sStart">Date et heure de ta dernière consommation<input id="sStart" type="datetime-local"></label>
+      <div class="row-actions" style="margin-top:10px"><button class="btn sm" data-action="resetOrigin">Remettre le 5 février 2025 à 15:00</button></div>
+      <label for="sGrams">Grammes consommés par jour, en moyenne<input id="sGrams" type="number" min="0.1" max="100" step="any" inputmode="decimal"></label>
+      <label for="sPrice">Prix moyen du gramme (en euros)<input id="sPrice" type="number" min="0" step="any" inputmode="decimal"></label>
+      <p class="hint" id="usageSummary" style="margin-top:8px"></p>
+      <div class="row-actions" style="margin-top:12px"><button class="btn" data-action="importUsage">Importer mon historique (CSV)</button></div>
+      <p class="hint" style="margin-top:8px">Colonnes attendues : poids, prix, type (herbe ou shit) et date, avec une ligne d'en-tête. Exporte ton tableur en CSV. Je calcule les moyennes pour toi.</p>
+      <input id="usageFile" type="file" accept=".csv,.tsv,.txt,text/csv,text/plain" hidden>
+    </div>
+
+    <div class="set-block">
+      <label for="sReasons">Mes raisons d'avoir arrêté<textarea id="sReasons" maxlength="800" placeholder="Elles s'afficheront quand tu traverses une envie."></textarea></label>
+    </div>
+
+    <div class="set-block">
+      <label style="margin-top:20px">Thème</label>
+      <div class="seg" role="radiogroup" aria-label="Thème">
+        <label><input type="radio" name="theme" value="auto"> Auto</label>
+        <label><input type="radio" name="theme" value="light"> Clair</label>
+        <label><input type="radio" name="theme" value="dark"> Sombre</label>
+        <label><input type="radio" name="theme" value="custom"> Autre</label>
+      </div>
+      <div id="customTheme" hidden>
+        <div class="presets" id="presets"></div>
+        <div class="pickers">
+          <label for="cBg">Fond<input type="color" id="cBg"></label>
+          <label for="cAcc">Accent<input type="color" id="cAcc"></label>
+          <label for="cAcc2">Bouton d'envie<input type="color" id="cAcc2"></label>
+        </div>
+        <p class="hint" style="margin-top:8px">Les textes et les contrastes s'adaptent tout seuls à ton fond.</p>
+      </div>
+      <label class="check" for="sSound"><input type="checkbox" id="sSound"> Sons de célébration</label>
+    </div>
+
+    <div class="set-block">
+      <label for="sCoach">Adresse du coach (facultatif)<input id="sCoach" type="url" placeholder="https://mon-coach.mon-compte.workers.dev" autocomplete="off"></label>
+      <p class="hint" style="margin-top:8px">Voir le fichier coach-worker.js. Tes messages passent par ce serveur, puis par Claude.</p>
+    </div>
+
+    <div class="set-block">
+      <h2 style="margin-top:20px">Tes données</h2>
+      <p class="muted">Tout reste sur cet appareil. Fais une sauvegarde de temps en temps.</p>
+      <div class="row-actions">
+        <button class="btn" data-action="export">Exporter</button>
+        <button class="btn" data-action="import">Importer</button>
+        <button class="btn danger" data-action="resetAll">Tout effacer</button>
+      </div>
+      <input id="importFile" type="file" accept="application/json,.json" hidden>
+    </div>
+
+    <p class="hint" style="margin-top:20px">Besoin d'un coup de main ? Si tu es en France, Drogues Info Service répond au 0 800 23 13 13.</p>
+  </section>
+</main>
+
+<button class="fab" id="fab" data-action="craving">J'ai une envie</button>
+
+<nav class="tabbar" aria-label="Navigation">
+  <div role="tablist">
+    <button role="tab" data-tab="home" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>Accueil</button>
+    <button role="tab" data-tab="body" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>Corps</button>
+    <button role="tab" data-tab="trophies" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4zM8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4M12 13v4M8 20h8"/></svg>Trophées</button>
+    <button role="tab" data-tab="track" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M6 3h12v18H6zM9 8h6M9 12h6M9 16h4"/></svg>Suivi</button>
+    <button role="tab" data-tab="coach" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>Coach</button>
+    <button role="tab" data-tab="settings" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Réglages</button>
+  </div>
+</nav>
+
+<!-- Mode envie -->
+<div id="craving" class="cv" role="dialog" aria-modal="true" aria-label="Traverser une envie" hidden>
+  <div class="cv-in">
+    <p class="cv-intro">Une envie dure en général quelques minutes, puis elle retombe. Respire avec le cercle.</p>
+    <div class="cv-stage"><div class="cv-circle" id="cvCircle"></div><div class="cv-cue" id="cvCue"></div></div>
+    <p class="cv-time" id="cvTime">3:00</p>
+    <p class="cv-tip" id="cvTip"></p>
+    <div class="cv-why" id="cvWhy"></div>
+    <div class="cv-actions">
+      <button class="btn primary" id="cvDone">J'ai traversé l'envie</button>
+      <button class="btn quiet" id="cvClose">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<dialog id="dlg" aria-labelledby="dlgTitle"><div id="dlgBody"></div><div class="dlg-actions" id="dlgActions"></div></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<script>
+(() => {
+'use strict';
+
+/* ---------- Utilitaires ---------- */
+const DAY = 864e5, HOUR = 36e5, MIN = 6e4;
+const KEY = 'souffle.v2';
+const ORIGINAL_START = new Date('2025-02-05T15:00:00+01:00').getTime(); // 5 février 2025, 15h00 heure de Paris : date d'arrêt par défaut
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const now = () => Date.now();
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const nf = new Intl.NumberFormat('fr-FR');
+const nf1 = new Intl.NumberFormat('fr-FR', {maximumFractionDigits:1});
+const euro0 = new Intl.NumberFormat('fr-FR', {style:'currency', currency:'EUR', maximumFractionDigits:0});
+const euro2 = new Intl.NumberFormat('fr-FR', {style:'currency', currency:'EUR', minimumFractionDigits:2, maximumFractionDigits:2});
+const moneyFmt = v => v < 100 ? euro2.format(v) : euro0.format(v);
+const gramsFmt = v => nf.format(Math.floor(v)) + ' g';
+const fmtDate = ts => new Date(ts).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'});
+const fmtDT = ts => new Date(ts).toLocaleString('fr-FR', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+const toLocalInput = ts => { const d = new Date(ts); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
+const num = v => parseFloat(String(v).replace(',', '.'));
+function remain(ms){
+  const m = Math.max(0, Math.ceil(ms / MIN));
+  const d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60), mm = m % 60;
+  if (d > 0) return `${d} j ${h} h`;
+  if (h > 0) return `${h} h ${pad(mm)}`;
+  return `${mm} min`;
+}
+function since(ts){
+  const diff = now() - ts, fut = diff < 0, d = Math.floor(Math.abs(diff) / DAY);
+  let t;
+  if (d < 1) t = 'moins d\'un jour';
+  else if (d < 60) t = `${d} jour${d > 1 ? 's' : ''}`;
+  else if (d < 730) t = `${Math.floor(d / 30.44)} mois`;
+  else { const y = Math.floor(d / 365.25), m = Math.floor((d - y * 365.25) / 30.44); t = `${y} ans${m ? ' et ' + m + ' mois' : ''}`; }
+  return (fut ? 'dans ' : 'il y a ') + t;
+}
+
+/* ---------- Couleurs (thème perso) ---------- */
+const hex2rgb = h => { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); const n = parseInt(h, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+const rgb2hex = (r, g, b) => '#' + [r, g, b].map(v => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('');
+const mix = (a, b, t) => { const x = hex2rgb(a), y = hex2rgb(b); return rgb2hex(x[0] + (y[0] - x[0]) * t, x[1] + (y[1] - x[1]) * t, x[2] + (y[2] - x[2]) * t); };
+const shade = (hex, t) => t < 0 ? mix(hex, '#000000', -t) : mix(hex, '#ffffff', t);
+const lum = h => { const c = hex2rgb(h).map(v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
+const contrast = (a, b) => { const l1 = lum(a), l2 = lum(b); return (Math.max(l1, l2) + .05) / (Math.min(l1, l2) + .05); };
+function ensure(fg, bg, min, toward){ let c = fg; for (let i = 0; i < 14 && contrast(c, bg) < min; i++) c = mix(c, toward, .12); return c; }
+const rgba = (hex, a) => `rgba(${hex2rgb(hex).join(',')},${a})`;
+const PRESETS = [
+  {n:'Aurore', bg:'#1B1030', a:'#FF7AB6', b:'#FFC857'},
+  {n:'Forêt',  bg:'#0F2318', a:'#7BD88F', b:'#F2C14E'},
+  {n:'Océan',  bg:'#071E2E', a:'#4CC9F0', b:'#FFB703'},
+  {n:'Braise', bg:'#1E1210', a:'#FF6B4A', b:'#FFD166'},
+  {n:'Prune',  bg:'#F6EEF8', a:'#7B2D8E', b:'#E07A1F'},
+  {n:'Dune',   bg:'#F3ECE2', a:'#A4562B', b:'#2B7A78'}
+];
+const THEME_VARS = ['--sky-top','--sky-bot','--ink','--muted','--line','--panel','--solid','--bar','--smog','--air','--on-air','--dawn','--on-dawn','--danger'];
+
+/* ---------- Données ---------- */
+const DEFAULTS = () => ({v:4, start:ORIGINAL_START, gramsPerDay:1, pricePerG:8, usage:null, theme:'auto',
+  themeCustom:{bg:PRESETS[0].bg, a:PRESETS[0].a, b:PRESETS[0].b}, sound:true, reasons:'', coachUrl:'',
+  journal:[], moods:[], cravings:[], slips:[], record:0, custom:[], dates:null, chat:[], seen:null});
+let S = DEFAULTS();
+let warned = false;
+
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch (e) { if (!warned) { warned = true; toast('Sauvegarde impossible sur ce navigateur.'); } }
+}
+function load(){
+  let raw = null;
+  try { raw = localStorage.getItem(KEY); } catch (e) {}
+  if (raw) { try { S = Object.assign(DEFAULTS(), JSON.parse(raw)); } catch (e) {} }
+  else migrateOld();
+  if ((S.v || 0) < 4) { S.start = ORIGINAL_START; S.seen = null; S.v = 4; } // remet la date d'arrêt d'origine une fois
+  if (!Array.isArray(S.dates)) S.dates = [{id:uid(), label:'Ma date de départ d\'origine', at:ORIGINAL_START, fav:true}];
+  if (typeof S.start !== 'number' || isNaN(S.start)) S.start = ORIGINAL_START;
+}
+/* Récupère les données de l'ancienne version (Timer App) */
+function migrateOld(){
+  try {
+    const j = localStorage.getItem('journal');
+    if (j) {
+      const doc = new DOMParser().parseFromString(j, 'text/html');
+      [...doc.querySelectorAll('p')].reverse().forEach(p => {
+        const t = p.textContent.trim(); if (!t) return;
+        const m = t.match(/^(\d{2})\/(\d{2})\/(\d{4})\s*:\s*([\s\S]*)$/);
+        if (m) S.journal.push({id:uid(), at:new Date(+m[3], +m[2] - 1, +m[1], 12).getTime(), text:m[4].trim()});
+        else S.journal.push({id:uid(), at:now(), text:t});
+      });
+    }
+    const mo = localStorage.getItem('moodLog');
+    if (mo) {
+      const map = {'😊':4, '😐':3, '😔':2, '😡':1};
+      const doc = new DOMParser().parseFromString(mo, 'text/html');
+      [...doc.querySelectorAll('p')].reverse().forEach(p => {
+        const m = p.textContent.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})\s*:\s*(\S+)/);
+        if (m && map[m[4]]) S.moods.push({at:new Date(+m[3], +m[2] - 1, +m[1], 12).getTime(), v:map[m[4]]});
+      });
+    }
+    save();
+  } catch (e) {}
+}
+
+/* ---------- Calculs ---------- */
+function stats(){
+  const ms = Math.max(0, now() - S.start);
+  const days = ms / DAY;
+  const grams = days * S.gramsPerDay;
+  return {ms, days, d:Math.floor(days), grams, euros:grams * S.pricePerG, yearly:365 * S.gramsPerDay * S.pricePerG};
+}
+
+/* ---------- Import de l'historique (CSV) ---------- */
+const norm = s => String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+function parseNum(v){ const m = String(v).replace(/\s/g, '').replace(',', '.').match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; }
+function parseDateStr(v){
+  v = String(v).trim(); let m;
+  if ((m = v.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/))) { let y = +m[3]; if (y < 100) y += 2000; return new Date(y, +m[2] - 1, +m[1], 12).getTime(); }
+  if ((m = v.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/))) return new Date(+m[1], +m[2] - 1, +m[3], 12).getTime();
+  return NaN;
+}
+function parseUsage(text){
+  const lines = text.replace(/^\uFEFF/, '').replace(/\r/g, '').split('\n').filter(l => l.trim());
+  if (lines.length < 2) return {error:'Le fichier est vide ou n\'a qu\'une ligne.'};
+  const delim = [';', '\t', ','].map(d => [d, lines[0].split(d).length]).sort((a, b) => b[1] - a[1])[0][0];
+  const head = lines[0].split(delim).map(norm);
+  const find = re => head.findIndex(h => re.test(h));
+  const iW = find(/poids|weight|gramm|quantit|^g$|^gr$/), iP = find(/prix|price|cout|montant|euro|€/),
+        iD = find(/date|jour|day/), iT = find(/type|herbe|shit|produit|nature|weed|hash/);
+  if (iW < 0 || iP < 0 || iD < 0) return {error:'Il me faut au moins les colonnes poids, prix et date, avec une ligne d\'en-tête.'};
+  const rows = []; let skipped = 0, excluded = 0;
+  for (let i = 1; i < lines.length; i++) {
+    const c = lines[i].split(delim);
+    const w = parseNum(c[iW]), p = parseNum(c[iP]), t = parseDateStr(c[iD]);
+    if (!(w > 0) || !(p >= 0) || isNaN(t)) { skipped++; continue; }
+    const ty = norm(iT >= 0 ? c[iT] : '');
+    if (/cbd|wax|huile|liquide|ml/.test(ty) || /ml/.test(norm(c[iW]))) { excluded++; continue; }
+    rows.push({w, p, t, type: /^s$|shit|hash|resine|pollen|haschich/.test(ty) ? 'shit' : /^h$|herbe|weed|beuh|fleur/.test(ty) ? 'herbe' : 'autre'});
+  }
+  if (!rows.length) return {error:'Je n\'ai trouvé aucune ligne exploitable (poids, prix et date).'};
+  const grams = rows.reduce((a, r) => a + r.w, 0), euros = rows.reduce((a, r) => a + r.p, 0);
+  const ts = rows.map(r => r.t), first = Math.min(...ts), last = Math.max(...ts);
+  const gap = rows.length > 1 ? (last - first) / DAY / (rows.length - 1) : 0;
+  const spanDays = Math.max(30, Math.round((last - first) / DAY + gap));
+  const byType = {};
+  rows.forEach(r => { const b = byType[r.type] || (byType[r.type] = {g:0, eur:0}); b.g += r.w; b.eur += r.p; });
+  Object.values(byType).forEach(b => b.ppg = b.g ? b.eur / b.g : 0);
+  return {n:rows.length, skipped, excluded, grams, euros, spanDays, gPerDay:grams / spanDays, pricePerG:euros / grams, byType};
+}
+function usageText(u){
+  const parts = Object.entries(u.byType).map(([k, b]) => `${k} ${nf1.format(b.g)} g à ${nf1.format(b.ppg)} €/g`);
+  return `${u.n} achats, ${nf1.format(u.grams)} g sur ${u.spanDays} jours, soit ${nf1.format(u.gPerDay)} g par jour à ${nf1.format(u.pricePerG)} €/g en moyenne (${parts.join(', ')}).`;
+}
+
+/* ---------- Trophées ---------- */
+const TIER = ['#C98B5A','#AEBBC4','#F2C14E','#5FD3BF','#6FB1FF','#A98BFF','#FF8FB1','#FFA24D','#F26B5B','#9FD8E8'];
+const TROPHIES = [
+  {id:'d1',   d:1,   name:'Premier souffle',        txt:'Vingt-quatre heures. Le plus dur, c\'est de commencer, et c\'est fait.'},
+  {id:'d3',   d:3,   name:'Le cap du manque',       txt:'Le manque est à son plus fort en ce moment, puis il redescend. Tiens bon.'},
+  {id:'d7',   d:7,   name:'Semaine claire',         txt:'Sept jours complets. Les symptômes physiques du manque s\'atténuent.'},
+  {id:'d14',  d:14,  name:'Deux semaines',          txt:'Le sommeil se remet en place peu à peu et les envies s\'espacent.'},
+  {id:'d30',  d:30,  name:'Un mois de ciel dégagé', txt:'Un mois entier. Tu n\'es plus au début, tu es dans le changement.'},
+  {id:'d60',  d:60,  name:'Deux mois',              txt:'Les envies sont plus rares et plus courtes. Tu as appris à les traverser.'},
+  {id:'d90',  d:90,  name:'Trois mois',             txt:'Un cap solide. Ton souffle s\'en rend compte.'},
+  {id:'d180', d:180, name:'Six mois',               txt:'Une demi-année. Ce qui était un effort devient une habitude.'},
+  {id:'d365', d:365, name:'Un an',                  txt:'Une année entière. Tu as repris la main sur ta santé.'},
+  {id:'d730', d:730, name:'Deux ans',               txt:'Deux ans. Tu peux être fier de ce que tu as construit.'}
+];
+const CRAV_TROPHIES = [
+  {id:'c1',   n:1,   name:'Première envie',   txt:'Tu as traversé ta première envie sans céder.'},
+  {id:'c10',  n:10,  name:'Dix envies',       txt:'Dix fois, l\'envie est montée puis retombée. Tu sais comment ça marche.'},
+  {id:'c25',  n:25,  name:'Vingt-cinq envies',txt:'Vingt-cinq envies traversées. Tu as un vrai savoir-faire.'},
+  {id:'c50',  n:50,  name:'Cinquante envies', txt:'Cinquante victoires discrètes.'},
+  {id:'c100', n:100, name:'Cent envies',      txt:'Cent envies traversées. Rien ne t\'arrête.'}
+];
+let badgeN = 0;
+function starPath(n, ro, ri){
+  let d = '';
+  for (let i = 0; i < n * 2; i++) { const r = i % 2 ? ri : ro, a = Math.PI * i / n - Math.PI / 2; d += (i ? 'L' : 'M') + (50 + r * Math.cos(a)).toFixed(2) + ' ' + (50 + r * Math.sin(a)).toFixed(2); }
+  return d + 'Z';
+}
+function badge(color, top, sub, on, points, label){
+  const id = 'bd' + (++badgeN);
+  if (!on) {
+    return `<svg class="badge" viewBox="0 0 100 100" role="img" aria-label="${esc(label)}"><path d="${starPath(points, 47, 40)}" fill="none" stroke="var(--line)" stroke-width="1.6" stroke-dasharray="3 3" stroke-linejoin="round"/>` +
+      `<circle cx="50" cy="50" r="28" fill="var(--panel)" stroke="var(--line)" stroke-width="1.5"/>` +
+      `<rect x="42" y="49" width="16" height="12" rx="2.5" fill="var(--muted)"/><path d="M45 49v-4a5 5 0 0 1 10 0v4" fill="none" stroke="var(--muted)" stroke-width="2.5"/></svg>`;
+  }
+  const big = String(top).length > 2 ? 16 : 21;
+  return `<svg class="badge" viewBox="0 0 100 100" role="img" aria-label="${esc(label)}"><defs>` +
+    `<linearGradient id="${id}a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${shade(color, .5)}"/><stop offset=".5" stop-color="${color}"/><stop offset="1" stop-color="${shade(color, -.32)}"/></linearGradient>` +
+    `<radialGradient id="${id}b" cx=".35" cy=".28" r=".95"><stop offset="0" stop-color="${shade(color, .93)}"/><stop offset="1" stop-color="${shade(color, .6)}"/></radialGradient></defs>` +
+    `<path d="${starPath(points, 47, 39)}" fill="url(#${id}a)" stroke="url(#${id}a)" stroke-width="3" stroke-linejoin="round"/>` +
+    `<circle cx="50" cy="50" r="32" fill="none" stroke="${shade(color, .75)}" stroke-opacity=".85" stroke-width="1.2"/>` +
+    `<circle cx="50" cy="50" r="29" fill="url(#${id}b)" stroke="${shade(color, -.25)}" stroke-width="1.6"/>` +
+    `<path d="M29 41 A22 22 0 0 1 47 28" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="2.4" stroke-linecap="round"/>` +
+    `<text x="50" y="47" text-anchor="middle" dominant-baseline="central" style="font-family:var(--font-d);font-weight:800;font-size:${big}px" fill="#10222B">${esc(top)}</text>` +
+    `<text x="50" y="63" text-anchor="middle" style="font-family:var(--font-b);font-weight:600;font-size:7.5px" fill="#35505C">${esc(sub)}</text></svg>`;
+}
+const dayBadge = (t, on) => badge(TIER[TROPHIES.indexOf(t) % TIER.length], t.d, t.d > 1 ? 'jours' : 'jour', on, 8 + 2 * Math.min(TROPHIES.indexOf(t), 5), t.name + (on ? ', débloqué' : ', verrouillé'));
+const cravBadge = (t, on) => badge('#3FC5AD', t.n, t.n > 1 ? 'envies' : 'envie', on, 7 + CRAV_TROPHIES.indexOf(t) * 2, t.name + (on ? ', débloqué' : ', verrouillé'));
+const findTrophy = id => TROPHIES.find(t => t.id === id) || CRAV_TROPHIES.find(t => t.id === id);
+function reachedIds(){
+  const out = [];
+  const days = stats().days; TROPHIES.forEach(t => { if (days >= t.d) out.push(t.id); });
+  CRAV_TROPHIES.forEach(t => { if (S.cravings.length >= t.n) out.push(t.id); });
+  return out;
+}
+function trophyBounds(days){
+  let prev = 0, next = null;
+  for (const t of TROPHIES) { if (days >= t.d) prev = t.d; else { next = t; break; } }
+  return {prev, next};
+}
+
+/* ---------- Santé (repères généraux, cannabis fumé) ---------- */
+const HEALTH = [
+  {h:24,    t:'24 heures',  x:'Le manque peut commencer : irritabilité, sommeil léger, appétit changé. C\'est normal et ça passe.'},
+  {h:72,    t:'3 jours',    x:'Tu es dans la zone du pic du manque, souvent entre le 2e et le 6e jour. Ça redescend ensuite.'},
+  {h:168,   t:'1 semaine',  x:'Les symptômes physiques du manque commencent à s\'atténuer chez beaucoup de personnes.'},
+  {h:336,   t:'2 semaines', x:'Le sommeil se régularise peu à peu, les rêves reviennent souvent.'},
+  {h:720,   t:'1 mois',     x:'La toux et la gêne respiratoire diminuent souvent nettement, et la concentration s\'améliore.'},
+  {h:2160,  t:'3 mois',     x:'L\'attention et la mémoire continuent de s\'améliorer, les envies sont plus rares.'},
+  {h:4320,  t:'6 mois',     x:'Les poumons ont eu le temps de récupérer une bonne partie de leur confort.'},
+  {h:8760,  t:'1 an',       x:'Un an sans fumer. C\'est un vrai cap pour ta santé pulmonaire.'}
+];
+
+/* ---------- Interface de base ---------- */
+const dlg = $('#dlg');
+let toastT = null;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2800);
+}
+function openDialog({title, html, actions}){
+  $('#dlgBody').innerHTML = (title ? `<h2 id="dlgTitle">${esc(title)}</h2>` : '') + (html || '');
+  const box = $('#dlgActions'); box.innerHTML = '';
+  (actions || [{label:'Fermer', cls:'primary'}]).forEach(a => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn ' + (a.cls || ''); b.textContent = a.label;
+    b.addEventListener('click', () => { const r = a.fn ? a.fn() : undefined; if (r !== false) dlg.close(); });
+    box.appendChild(b);
+  });
+  if (!dlg.open) dlg.showModal();
+}
+function confirmDlg(title, text, okLabel, fn, danger){
+  openDialog({title, html:`<p>${esc(text)}</p>`, actions:[{label:'Annuler', cls:'quiet'}, {label:okLabel, cls: danger ? 'danger' : 'primary', fn}]});
+}
+function chime(){
+  if (!S.sound) return;
+  try {
+    const c = new (window.AudioContext || window.webkitAudioContext)();
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'sine'; o.frequency.value = 660;
+    g.gain.setValueAtTime(0.0001, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.15, c.currentTime + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 1.2);
+    o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 1.3);
+  } catch (e) {}
+}
+function confetti(){
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const cv = $('#fx'), ctx = cv.getContext('2d');
+  cv.width = innerWidth; cv.height = innerHeight;
+  const cols = ['#5FD3BF', '#FFB85C', '#6FB1FF', '#FF8FB1', '#EAF4F7'];
+  const P = Array.from({length:130}, (_, i) => ({x:innerWidth / 2, y:innerHeight * 0.4, vx:(Math.random() - .5) * 13,
+    vy:Math.random() * -13 - 3, r:Math.random() * 4 + 2, c:cols[i % cols.length], rot:Math.random() * 6}));
+  let f = 0;
+  (function step(){
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    P.forEach(p => {
+      p.vy += .28; p.x += p.vx; p.y += p.vy; p.vx *= .99; p.rot += .12;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.c;
+      ctx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r); ctx.restore();
+    });
+    if (++f < 150) requestAnimationFrame(step); else ctx.clearRect(0, 0, cv.width, cv.height);
+  })();
+}
+
+/* ---------- Thème ---------- */
+function applyCustom(root){
+  const t = S.themeCustom, bg = t.bg;
+  const dark = lum(bg) < .35;
+  const ink = dark ? mix(bg, '#ffffff', .93) : mix(bg, '#000000', .87);
+  const solid = dark ? mix(bg, '#ffffff', .08) : mix(bg, '#ffffff', .7);
+  const air = ensure(t.a, bg, 4.5, ink);
+  const dawn = t.b;
+  const pick = c => contrast(c, '#ffffff') >= contrast(c, '#0b1a16') ? '#ffffff' : '#0b1a16';
+  const v = {
+    '--sky-bot': bg, '--sky-top': mix(bg, t.a, dark ? .16 : .14), '--ink': ink,
+    '--muted': ensure(mix(ink, bg, .38), bg, 4.5, ink), '--line': rgba(ink, .16),
+    '--panel': dark ? 'rgba(255,255,255,.06)' : 'rgba(255,255,255,.6)', '--solid': solid, '--bar': rgba(solid, .94),
+    '--smog': mix(bg, ink, .4), '--air': air, '--on-air': pick(air), '--dawn': dawn, '--on-dawn': pick(dawn),
+    '--danger': ensure(dark ? '#FF8A78' : '#B8402F', bg, 4.5, ink)
+  };
+  Object.entries(v).forEach(([k, val]) => root.style.setProperty(k, val));
+  return dark ? 'dark' : 'light';
+}
+function applyTheme(){
+  const root = document.documentElement;
+  THEME_VARS.forEach(v => root.style.removeProperty(v));
+  let mode;
+  if (S.theme === 'custom') mode = applyCustom(root);
+  else mode = S.theme === 'auto' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : S.theme;
+  root.dataset.theme = mode;
+  $('#metaTheme').setAttribute('content', S.theme === 'custom' ? S.themeCustom.bg : (mode === 'dark' ? '#0F2A3A' : '#DCEBF3'));
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (S.theme === 'auto') applyTheme(); });
+
+/* ---------- Onglets ---------- */
+const TABS = ['home', 'body', 'trophies', 'track', 'coach', 'settings'];
+let tab = 'home';
+function showTab(id){
+  tab = id;
+  TABS.forEach(t => {
+    $('#tab-' + t).classList.toggle('active', t === id);
+    $(`[data-tab="${t}"]`).setAttribute('aria-selected', String(t === id));
+  });
+  $('#fab').hidden = id === 'coach';
+  renderTab(id);
+  window.scrollTo(0, 0);
+  try { history.replaceState(null, '', '#' + id); } catch (e) {}
+}
+function renderTab(id){
+  if (id === 'home') renderHome();
+  else if (id === 'body') renderBody();
+  else if (id === 'trophies') renderTrophies();
+  else if (id === 'track') renderTrack();
+  else if (id === 'coach') renderCoach();
+  else if (id === 'settings') fillSettings();
+}
+
+/* ---------- Accueil ---------- */
+const CIRC = 2 * Math.PI * 136;
+function renderHome(){
+  $('#homeEmpty').hidden = true; $('#homeMain').hidden = false;
+  updateHero(); renderHomeDates();
+}
+function updateHero(){
+  const st = stats();
+  const h = Math.floor(st.ms % DAY / HOUR), m = Math.floor(st.ms % HOUR / MIN), s = Math.floor(st.ms % MIN / 1000);
+  $('#hDays').textContent = st.d;
+  $('#hUnit').textContent = st.d > 1 ? 'jours sans fumer' : 'jour sans fumer';
+  $('#hHms').textContent = `${pad(h)} h ${pad(m)} min ${pad(s)} s`;
+  $('#hSince').textContent = 'Depuis le ' + new Date(S.start).toLocaleString('fr-FR', {weekday:'long', day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit'});
+  const {prev, next} = trophyBounds(st.days);
+  const p = next ? (st.days - prev) / (next.d - prev) : 1;
+  const ring = $('#ringProg'); ring.style.strokeDasharray = CIRC; ring.style.strokeDashoffset = CIRC * (1 - Math.min(1, p));
+  $('#tGrams').textContent = gramsFmt(st.grams);
+  $('#tEuros').textContent = moneyFmt(st.euros);
+  $('#tYear').textContent = moneyFmt(st.yearly);
+  if (next) {
+    $('#nextTxt').textContent = `${next.name}, dans ${remain(S.start + next.d * DAY - now())}.`;
+    $('#nextBar').style.width = (p * 100).toFixed(1) + '%';
+  } else {
+    $('#nextTxt').textContent = 'Tous les trophées de durée sont débloqués. La suite t\'appartient.';
+    $('#nextBar').style.width = '100%';
+  }
+  const rec = Math.max(S.record, st.d);
+  $('#recordTxt').textContent = st.d > 0 && st.d >= S.record
+    ? (S.record > 0 ? 'Tu es en train de battre ton record.' : 'C\'est ta première série.')
+    : `Ton record : ${rec} jour${rec > 1 ? 's' : ''}.`;
+  document.documentElement.style.setProperty('--haze', String(Math.max(.08, .7 * (1 - Math.min(st.days / 60, 1))).toFixed(3)));
+  document.title = `${st.d} j sans fumer · Souffle`;
+}
+function renderHomeDates(){
+  const favs = S.dates.filter(x => x.fav).sort((a, b) => a.at - b.at);
+  $('#homeDates').hidden = !favs.length;
+  $('#homeDatesList').innerHTML = favs.map(x => `<div class="fav-line"><b>${esc(x.label)}</b><span>${esc(since(x.at))}</span></div>`).join('');
+}
+
+/* ---------- Corps ---------- */
+function renderBody(){
+  const hours = (now() - S.start) / HOUR;
+  const doneItems = HEALTH.filter(i => hours >= i.h);
+  $('#bodyLead').textContent = doneItems.length ? 'En ce moment : ' + doneItems[doneItems.length - 1].x : 'Ça commence dans quelques heures. Tu es déjà en route.';
+  let curSet = false;
+  $('#bodyList').innerHTML = HEALTH.map(i => {
+    const done = hours >= i.h;
+    const cur = !done && !curSet; if (cur) curSet = true;
+    const p = Math.min(100, hours / i.h * 100);
+    return `<li class="${done ? 'done' : cur ? 'cur' : ''}"><span class="dot">${done ? '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 6.5l2.5 2.5 4.5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg>' : ''}</span>
+      <div><b>${esc(i.t)}</b><p>${esc(i.x)}</p>${cur ? `<div class="bar" aria-hidden="true"><i style="width:${p.toFixed(1)}%"></i></div><span class="hint">${Math.floor(p)} % du chemin</span>` : ''}</div></li>`;
+  }).join('');
+  renderDates();
+}
+function renderDates(){
+  const list = S.dates.slice().sort((a, b) => a.at - b.at);
+  $('#datesList').innerHTML = list.length ? list.map(x =>
+    `<div class="rw"><div class="rw-h"><b>${esc(x.label)}</b><button class="star" data-action="favDate" data-id="${x.id}" aria-pressed="${!!x.fav}" aria-label="${x.fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}">${x.fav ? '★' : '☆'}</button></div>
+     <p class="hint">${esc(fmtDate(x.at))}, ${esc(since(x.at))}</p>
+     <div class="rw-a"><button class="btn sm" data-action="useDate" data-id="${x.id}">Utiliser comme départ</button><button class="btn quiet sm" data-action="delDate" data-id="${x.id}">Supprimer</button></div></div>`).join('')
+    : '<p class="hint">Aucune date pour l\'instant.</p>';
+}
+
+/* ---------- Trophées ---------- */
+function trophyStatus(t){
+  if (t.d !== undefined) {
+    const at = S.start + t.d * DAY;
+    return now() >= at ? {on:true, txt:'Le ' + fmtDate(at)} : {on:false, txt:'Dans ' + remain(at - now())};
+  }
+  if (S.cravings.length >= t.n) return {on:true, txt:'Le ' + fmtDate(S.cravings[t.n - 1].at)};
+  return {on:false, txt:`Encore ${t.n - S.cravings.length}`};
+}
+function tile(t){
+  const s = trophyStatus(t);
+  const b = t.d !== undefined ? dayBadge(t, s.on) : cravBadge(t, s.on);
+  return `<button class="tile ${s.on ? '' : 'locked'}" data-action="trophy" data-id="${t.id}">${b}<b>${esc(t.name)}</b><span>${esc(s.txt)}</span></button>`;
+}
+function renderTrophies(){
+  const st = stats();
+  let feat = '';
+  const {prev, next} = trophyBounds(st.days);
+  if (next) {
+    const p = (st.days - prev) / (next.d - prev);
+    feat = `<div class="feature">${dayBadge(next, false)}<div><h3>${esc(next.name)}</h3><p class="muted">${esc(next.txt)}</p>
+      <div class="bar"><i style="width:${(p * 100).toFixed(1)}%"></i></div>
+      <p class="hint">Dans ${esc(remain(S.start + next.d * DAY - now()))}</p></div></div>`;
+  }
+  $('#trFeature').innerHTML = feat;
+  $('#trDays').innerHTML = TROPHIES.map(tile).join('');
+  $('#trCrav').innerHTML = CRAV_TROPHIES.map(tile).join('');
+  $('#trCustom').innerHTML = S.custom.length ? S.custom.map(r => {
+    const v = r.kind === 'euros' ? st.euros : st.days;
+    const reached = v >= r.target;
+    const p = Math.min(100, v / r.target * 100);
+    const goal = r.kind === 'euros' ? moneyFmt(r.target) : `${r.target} jour${r.target > 1 ? 's' : ''}`;
+    const left = r.kind === 'euros' ? moneyFmt(Math.max(0, r.target - v)) : `${Math.ceil(Math.max(0, r.target - v))} j`;
+    return `<div class="rw"><div class="rw-h"><b>${esc(r.label)}</b><span class="muted">${esc(goal)}</span></div>
+      <div class="bar"><i style="width:${p.toFixed(1)}%"></i></div>
+      <p class="hint">${r.claimed ? 'Offert le ' + esc(fmtDate(r.claimed)) : reached ? 'Objectif atteint, tu peux te l\'offrir.' : 'Encore ' + esc(left)}</p>
+      <div class="rw-a">${reached && !r.claimed ? `<button class="btn primary sm" data-action="claimReward" data-id="${r.id}">Je me l'offre</button>` : ''}
+      <button class="btn quiet sm" data-action="delReward" data-id="${r.id}">Supprimer</button></div></div>`;
+  }).join('') : '<p class="hint">Aucune récompense pour l\'instant.</p>';
+}
+
+/* ---------- Suivi ---------- */
+const EM = {4:'😊', 3:'😐', 2:'😔', 1:'😡'};
+let favOnly = false;
+function renderTrack(){ renderMood(); renderCravings(); renderJournal(); renderSlips(); }
+function renderMood(){
+  const days = [];
+  for (let i = 6; i >= 0; i--) { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - i); days.push(d); }
+  $('#moodStrip').innerHTML = days.map(d => {
+    const m = S.moods.find(x => new Date(x.at).toDateString() === d.toDateString());
+    return `<div class="strip-c"><span class="em">${m ? EM[m.v] : '–'}</span><span class="wd">${esc(d.toLocaleDateString('fr-FR', {weekday:'short'}).replace('.', ''))}</span></div>`;
+  }).join('');
+  const today = S.moods.find(x => new Date(x.at).toDateString() === new Date().toDateString());
+  $$('#moodBtns .mood').forEach(b => b.setAttribute('aria-pressed', String(!!today && String(today.v) === b.dataset.value)));
+}
+function renderCravings(){
+  const cr = S.cravings, counts = [], labels = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - i);
+    counts.push(cr.filter(c => new Date(c.at).toDateString() === d.toDateString()).length);
+    labels.push(d.toLocaleDateString('fr-FR', {weekday:'narrow'}));
+  }
+  const n7 = counts.reduce((a, b) => a + b, 0);
+  $('#cravSummary').textContent = `Aujourd'hui : ${counts[6]}. Sur 7 jours : ${n7}. Depuis le début : ${cr.length}.`;
+  const max = Math.max(1, ...counts);
+  $('#cravBars').innerHTML = counts.map((c, i) => `<div class="col"><div style="height:${c ? Math.max(8, c / max * 100) : 0}%"></div><span class="n">${c}</span><span>${esc(labels[i])}</span></div>`).join('');
+  let insight;
+  if (cr.length >= 5) {
+    const w = {'le matin':0, 'l\'après-midi':0, 'la soirée':0, 'la nuit':0};
+    cr.forEach(c => { const h = new Date(c.at).getHours();
+      if (h >= 5 && h < 12) w['le matin']++; else if (h >= 12 && h < 18) w['l\'après-midi']++; else if (h >= 18 && h < 23) w['la soirée']++; else w['la nuit']++; });
+    const top = Object.entries(w).sort((a, b) => b[1] - a[1])[0];
+    insight = `Tes envies arrivent surtout ${top[0]}. Prévois quelque chose à ce moment-là.`;
+  } else insight = 'Après quelques envies notées, je te dirai à quel moment de la journée elles reviennent.';
+  $('#cravInsight').textContent = insight;
+}
+function renderJournal(){
+  $('#favFilter').setAttribute('aria-pressed', String(favOnly));
+  const list = S.journal.filter(e => !favOnly || e.fav).sort((a, b) => b.at - a.at);
+  $('#journalList').innerHTML = list.length ? list.map(e =>
+    `<article class="jr"><div class="jr-h"><time>${esc(fmtDT(e.at))}</time><span><button class="star" data-action="favNote" data-id="${e.id}" aria-pressed="${!!e.fav}" aria-label="${e.fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}">${e.fav ? '★' : '☆'}</button><button class="btn quiet sm" data-action="delJournal" data-id="${e.id}">Supprimer</button></span></div><p>${esc(e.text)}</p></article>`).join('')
+    : `<p class="hint" style="margin-top:12px">${favOnly ? 'Aucune note en favori. Touche l\'étoile d\'une note pour la garder ici.' : 'Rien pour l\'instant. Écrire ce que tu ressens aide à voir ce qui déclenche les envies.'}</p>`;
+}
+function renderSlips(){
+  $('#slipsBlock').hidden = !S.slips.length;
+  $('#slipsList').innerHTML = S.slips.slice().reverse().map(s =>
+    `<div class="slip"><b>Série de ${s.days} jour${s.days > 1 ? 's' : ''}</b>, terminée le ${esc(fmtDate(s.at))}.${s.trigger ? `<p class="muted">Déclencheur : ${esc(s.trigger)}</p>` : ''}</div>`).join('');
+}
+
+/* ---------- Coach ---------- */
+let sending = false;
+const coachReady = () => /^https:\/\//.test(S.coachUrl || '');
+function renderCoach(){
+  const ok = coachReady();
+  $('#coachOff').hidden = ok; $('#coachOn').hidden = !ok;
+  if (ok) renderChat();
+}
+function renderChat(){
+  const log = $('#chatLog');
+  log.innerHTML = (S.chat.length ? S.chat.map(m => `<div class="msg ${m.role}">${esc(m.content)}</div>`).join('')
+    : '<p class="hint">Dis-moi comment tu te sens, ou ce qui te met en difficulté en ce moment.</p>') + (sending ? '<div class="msg assistant typing">…</div>' : '');
+  $('#chatSend').disabled = sending;
+  if (log.lastElementChild) log.lastElementChild.scrollIntoView({block:'end'});
+}
+function coachContext(){
+  const st = stats();
+  const since7 = now() - 7 * DAY;
+  const today = S.moods.find(x => new Date(x.at).toDateString() === new Date().toDateString());
+  return {
+    days:st.d, hours:Math.floor(st.ms / HOUR), gramsPerDayBefore:S.gramsPerDay, eurosSaved:Math.round(st.euros),
+    cravingsLast7Days:S.cravings.filter(c => c.at >= since7).length, cravingsTotal:S.cravings.length,
+    moodToday: today ? {4:'bien', 3:'bof', 2:'bas', 1:'tendu'}[today.v] : null,
+    slipsCount:S.slips.length, record:Math.max(S.record, st.d),
+    reasons:(S.reasons || '').slice(0, 500),
+    importantDates:S.dates.filter(x => x.fav).slice(0, 8).map(x => ({label:x.label.slice(0, 60), when:since(x.at)}))
+  };
+}
+async function sendChat(){
+  if (sending) return;
+  const ta = $('#chatText'), text = ta.value.trim();
+  if (!text) return;
+  if (!coachReady()) { toast('Renseigne l\'adresse du coach dans les réglages.'); return; }
+  S.chat.push({role:'user', content:text.slice(0, 2000)});
+  ta.value = ''; sending = true; renderChat();
+  try {
+    const messages = S.chat.filter(m => !m.error).slice(-12).map(m => ({role:m.role, content:m.content}));
+    const res = await fetch(S.coachUrl, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({messages, context:coachContext()})});
+    if (!res.ok) throw new Error('http ' + res.status);
+    const data = await res.json();
+    const reply = String(data.reply || '').trim();
+    if (!reply) throw new Error('vide');
+    S.chat.push({role:'assistant', content:reply});
+  } catch (e) {
+    S.chat.push({role:'assistant', error:true, content:'Je n\'arrive pas à joindre le coach pour le moment. Vérifie l\'adresse dans les réglages, ou réessaie dans un instant.'});
+  }
+  S.chat = S.chat.slice(-60); sending = false; save(); renderChat();
+}
+
+/* ---------- Réglages ---------- */
+function fillSettings(){
+  $('#sStart').value = toLocalInput(S.start);
+  $('#sGrams').value = S.gramsPerDay; $('#sPrice').value = S.pricePerG;
+  $('#usageSummary').textContent = S.usage ? 'D\'après ton historique : ' + usageText(S.usage) : 'Valeurs estimées. Importe ton historique pour des moyennes exactes.';
+  $('#sReasons').value = S.reasons; $('#sSound').checked = S.sound; $('#sCoach').value = S.coachUrl || '';
+  $$('input[name="theme"]').forEach(r => r.checked = r.value === S.theme);
+  renderCustomTheme();
+}
+function renderCustomTheme(){
+  $('#customTheme').hidden = S.theme !== 'custom';
+  const t = S.themeCustom;
+  $('#presets').innerHTML = PRESETS.map((p, i) => {
+    const txt = lum(p.bg) < .35 ? '#fff' : '#111';
+    const on = p.bg.toLowerCase() === t.bg.toLowerCase() && p.a.toLowerCase() === t.a.toLowerCase() && p.b.toLowerCase() === t.b.toLowerCase();
+    return `<button type="button" class="preset" data-action="preset" data-i="${i}" aria-pressed="${on}" style="background:linear-gradient(135deg,${p.bg} 52%,${p.a} 52% 78%,${p.b} 78%);color:${txt}">${esc(p.n)}</button>`;
+  }).join('');
+  $('#cBg').value = t.bg; $('#cAcc').value = t.a; $('#cAcc2').value = t.b;
+}
+function bindSettings(){
+  $('#sStart').addEventListener('change', e => {
+    const ts = new Date(e.target.value).getTime();
+    if (isNaN(ts)) { toast('Date invalide.'); fillSettings(); return; }
+    if (ts > now()) { toast('La date ne peut pas être dans le futur.'); fillSettings(); return; }
+    S.start = ts; S.seen = null; checkUnlocks(true); save(); toast('Date de départ mise à jour.');
+  });
+  const numField = (id, key, min, max) => $(id).addEventListener('change', e => {
+    const v = num(e.target.value);
+    if (isNaN(v) || v < min || v > max) { toast('Valeur invalide.'); fillSettings(); return; }
+    S[key] = v; save(); toast('Enregistré.');
+  });
+  numField('#sGrams', 'gramsPerDay', 0.1, 100); numField('#sPrice', 'pricePerG', 0, 1000);
+  $('#sReasons').addEventListener('change', e => { S.reasons = e.target.value.trim(); save(); toast('Enregistré.'); });
+  $('#sSound').addEventListener('change', e => { S.sound = e.target.checked; save(); });
+  $('#sCoach').addEventListener('change', e => {
+    const v = e.target.value.trim();
+    if (v && !/^https:\/\//.test(v)) { toast('L\'adresse doit commencer par https://'); fillSettings(); return; }
+    S.coachUrl = v; save(); toast('Enregistré.');
+  });
+  $$('input[name="theme"]').forEach(r => r.addEventListener('change', () => {
+    S.theme = r.value; save(); applyTheme(); renderCustomTheme();
+  }));
+  const colorInput = (id, key) => $(id).addEventListener('input', e => { S.themeCustom[key] = e.target.value; applyTheme(); save(); renderCustomTheme(); });
+  colorInput('#cBg', 'bg'); colorInput('#cAcc', 'a'); colorInput('#cAcc2', 'b');
+  $('#importFile').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      try {
+        const d = JSON.parse(rd.result);
+        if (!d || typeof d !== 'object' || typeof d.start !== 'number') throw new Error('bad');
+        confirmDlg('Importer cette sauvegarde ?', 'Tes données actuelles seront remplacées par celles du fichier.', 'Importer', () => {
+          S = Object.assign(DEFAULTS(), d); if (!S.themeCustom) S.themeCustom = DEFAULTS().themeCustom;
+          save(); applyTheme(); renderAll(); fillSettings(); toast('Sauvegarde importée.');
+        });
+      } catch (err) { toast('Fichier non reconnu.'); }
+      e.target.value = '';
+    };
+    rd.readAsText(f);
+  });
+  $('#usageFile').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      const u = parseUsage(String(rd.result));
+      e.target.value = '';
+      if (u.error) { openDialog({title:'Import impossible', html:`<p>${esc(u.error)}</p>`}); return; }
+      openDialog({title:'Voici ce que j\'ai calculé', html:`<p>${esc(usageText(u))}</p>${u.skipped ? `<p class="muted">${u.skipped} ligne${u.skipped > 1 ? 's' : ''} ignorée${u.skipped > 1 ? 's' : ''} (totaux ou données incomplètes).</p>` : ''}${u.excluded ? `<p class="muted">${u.excluded} ligne${u.excluded > 1 ? 's' : ''} exclue${u.excluded > 1 ? 's' : ''} (CBD, wax).</p>` : ''}`,
+        actions:[{label:'Annuler', cls:'quiet'}, {label:'Utiliser ces moyennes', cls:'primary', fn:() => {
+          S.gramsPerDay = Math.round(u.gPerDay * 100) / 100; S.pricePerG = Math.round(u.pricePerG * 100) / 100; S.usage = u; save(); fillSettings(); renderHome(); toast('Moyennes mises à jour.');
+        }}]});
+    };
+    rd.readAsText(f);
+  });
+}
+
+/* ---------- Trophées débloqués ---------- */
+function celebrate({title, text, badgeHtml}){
+  confetti(); chime();
+  openDialog({title, html:`<div class="dlg-badge">${badgeHtml || ''}</div><p>${esc(text)}</p>`, actions:[{label:'Génial', cls:'primary'}]});
+}
+function checkUnlocks(silent){
+  const r = reachedIds();
+  if (!S.seen) { S.seen = r.slice(); save(); return; }
+  const fresh = r.filter(id => !S.seen.includes(id));
+  if (fresh.length) {
+    S.seen.push(...fresh); save();
+    if (!silent) {
+      const t = findTrophy(fresh[fresh.length - 1]);
+      celebrate({title:'Nouveau trophée : ' + t.name, text:t.txt, badgeHtml: t.d !== undefined ? dayBadge(t, true) : cravBadge(t, true)});
+      if (tab === 'trophies') renderTrophies();
+    }
+  }
+  if (!silent) {
+    const st = stats();
+    S.custom.forEach(c => {
+      const v = c.kind === 'euros' ? st.euros : st.days;
+      if (!c.notified && v >= c.target) {
+        c.notified = true; save();
+        celebrate({title:'Récompense débloquée', text:`Tu peux t'offrir : ${c.label}. Tu l'as bien mérité.`, badgeHtml:''});
+        if (tab === 'trophies') renderTrophies();
+      }
+    });
+  }
+}
+
+/* ---------- Mode envie ---------- */
+const TIPS = [
+  'Bois un grand verre d\'eau, à petites gorgées.',
+  'Change d\'endroit : sors, respire dehors, marche cinq minutes.',
+  'Mâche un chewing-gum ou croque quelque chose de frais.',
+  'Passe un peu d\'eau fraîche sur le visage.',
+  'Envoie un message à quelqu\'un. Une voix aide.',
+  'Cette envie va passer, comme les précédentes.',
+  'Occupe tes mains : étirements, rangement, un jeu.'
+];
+const PHASES = [{t:'Inspire', s:1}, {t:'Retiens', s:1}, {t:'Expire', s:.55}, {t:'Retiens', s:.55}];
+let cv = null;
+function setPhase(){
+  const p = PHASES[cv.phase % 4], c = $('#cvCircle');
+  c.style.transition = (p.t === 'Inspire' || p.t === 'Expire') ? 'transform 4s ease-in-out' : 'none';
+  c.style.transform = `scale(${p.s})`;
+  $('#cvCue').textContent = p.t; cv.phase++;
+}
+function cvTick(){
+  cv.left--;
+  if (cv.left % 25 === 0 && cv.left > 0) { cv.tip = (cv.tip + 1) % TIPS.length; $('#cvTip').textContent = TIPS[cv.tip]; }
+  if (cv.left <= 0) {
+    cv.left = 0; clearInterval(cv.tick); chime();
+    $('#cvTip').textContent = 'Trois minutes sont passées. L\'envie a sûrement perdu de sa force.';
+  }
+  $('#cvTime').textContent = `${Math.floor(cv.left / 60)}:${pad(cv.left % 60)}`;
+}
+function openCraving(){
+  const ov = $('#craving'); ov.hidden = false; document.body.style.overflow = 'hidden';
+  cv = {left:180, phase:0, tip:Math.floor(Math.random() * TIPS.length), last:document.activeElement};
+  $('#cvTime').textContent = '3:00'; $('#cvTip').textContent = TIPS[cv.tip];
+  $('#cvWhy').innerHTML = S.reasons ? `<b>Pourquoi tu as arrêté</b>${esc(S.reasons)}` : 'Ajoute tes raisons dans les réglages. Elles s\'afficheront ici.';
+  const c = $('#cvCircle'); c.style.transition = 'none'; c.style.transform = 'scale(.55)'; c.getBoundingClientRect();
+  setPhase(); cv.ph = setInterval(setPhase, 4000); cv.tick = setInterval(cvTick, 1000);
+  $('#cvDone').focus();
+}
+function closeCraving(){
+  if (!cv) return;
+  clearInterval(cv.ph); clearInterval(cv.tick);
+  $('#craving').hidden = true; document.body.style.overflow = '';
+  if (cv.last && cv.last.focus) cv.last.focus();
+  cv = null;
+}
+function doneCraving(){
+  S.cravings.push({at:now()}); save();
+  const n = S.cravings.length;
+  closeCraving();
+  toast(`Envie traversée. C'est la ${n === 1 ? 'première' : n + 'e'}.`);
+  checkUnlocks(); renderAll();
+}
+
+/* ---------- Actions ---------- */
+function useDateAsStart(x){
+  if (x.at > now()) { toast('Cette date est dans le futur.'); return; }
+  S.start = x.at; S.seen = null; checkUnlocks(true); save(); renderAll(); toast('Date de départ mise à jour.');
+}
+function onboarding(){
+  openDialog({title:'Date de départ', html:`<p class="muted">Dis-moi quand a eu lieu ta dernière consommation. Tu pourras tout modifier ensuite.</p>
+    <label for="obStart">Date et heure<input id="obStart" type="datetime-local" value="${toLocalInput(S.start)}"></label>`,
+    actions:[{label:'Valider', cls:'primary', fn:() => {
+      const ts = new Date($('#obStart').value).getTime();
+      if (isNaN(ts) || ts > now()) { toast('Choisis une date passée.'); return false; }
+      S.start = ts; S.seen = null; checkUnlocks(true); save(); renderAll();
+    }}]});
+}
+function slipDialog(){
+  const st = stats(), rec = Math.max(S.record, st.d);
+  openDialog({title:'Ça arrive', html:`<p>Ça n'efface pas ce que tu as construit. Ton record reste à ${rec} jour${rec > 1 ? 's' : ''}.</p>
+    <label for="slipWhy">Qu'est-ce qui s'est passé ? (facultatif)<textarea id="slipWhy" maxlength="500" style="min-height:80px" placeholder="Soirée, stress, ennui..."></textarea></label>`,
+    actions:[{label:'Annuler', cls:'quiet'}, {label:'Repartir de zéro', cls:'danger', fn:() => {
+      S.record = Math.max(S.record, st.d);
+      S.slips.push({at:now(), days:st.d, trigger:$('#slipWhy').value.trim().slice(0, 500)});
+      S.start = now(); S.seen = (S.seen || []).filter(id => id[0] === 'c'); save(); renderAll();
+      toast('On repart. Tu sais déjà que tu en es capable.');
+    }}]});
+}
+async function share(){
+  const st = stats();
+  const text = `${st.d} jour${st.d > 1 ? 's' : ''} sans fumer, ${gramsFmt(st.grams)} évités et ${moneyFmt(st.euros)} économisés.`;
+  if (navigator.share) { try { await navigator.share({text}); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+  try { await navigator.clipboard.writeText(text); toast('Message copié.'); } catch (e) { toast('Copie impossible sur ce navigateur.'); }
+}
+const actions = {
+  start: onboarding,
+  craving: openCraving,
+  slip: slipDialog,
+  share,
+  toSettings: () => showTab('settings'),
+  resetOrigin(){ confirmDlg('Remettre la date d\'origine ?', 'Le compteur repartira du 5 février 2025 à 15:00.', 'Remettre', () => { S.start = ORIGINAL_START; S.seen = null; checkUnlocks(true); save(); renderAll(); fillSettings(); toast('Date d\'origine remise.'); }); },
+  trophy(el){
+    const t = findTrophy(el.dataset.id), s = trophyStatus(t);
+    openDialog({title:t.name, html:`<div class="dlg-badge">${t.d !== undefined ? dayBadge(t, s.on) : cravBadge(t, s.on)}</div><p>${esc(t.txt)}</p><p class="muted">${esc(s.on ? 'Débloqué. ' + s.txt : s.txt)}</p>`});
+  },
+  mood(el){
+    const v = +el.dataset.value, k = new Date().toDateString();
+    S.moods = S.moods.filter(m => new Date(m.at).toDateString() !== k); S.moods.push({at:now(), v}); save();
+    renderMood(); toast('Humeur notée.');
+  },
+  saveJournal(){
+    const ta = $('#journalText'), text = ta.value.trim();
+    if (!text) { toast('Écris quelque chose d\'abord.'); return; }
+    S.journal.push({id:uid(), at:now(), text, fav:false}); save(); ta.value = ''; renderJournal(); toast('Note enregistrée.');
+  },
+  favNote(el){ const e = S.journal.find(x => x.id === el.dataset.id); if (e) { e.fav = !e.fav; save(); renderJournal(); } },
+  favFilter(){ favOnly = !favOnly; renderJournal(); },
+  delJournal(el){ confirmDlg('Supprimer cette note ?', 'Elle sera effacée définitivement.', 'Supprimer', () => { S.journal = S.journal.filter(e => e.id !== el.dataset.id); save(); renderJournal(); }, true); },
+  addDate(){
+    const label = $('#dtLabel').value.trim(), at = new Date($('#dtWhen').value).getTime();
+    if (!label || isNaN(at)) { toast('Donne un nom et une date.'); return; }
+    S.dates.push({id:uid(), label, at, fav:true}); save(); $('#dtLabel').value = ''; $('#dtWhen').value = ''; renderDates(); toast('Date ajoutée.');
+  },
+  favDate(el){ const x = S.dates.find(d => d.id === el.dataset.id); if (x) { x.fav = !x.fav; save(); renderDates(); } },
+  useDate(el){ const x = S.dates.find(d => d.id === el.dataset.id); if (x) confirmDlg('Changer la date de départ ?', `Le compteur repartira du ${fmtDate(x.at)}.`, 'Utiliser cette date', () => useDateAsStart(x)); },
+  delDate(el){ confirmDlg('Supprimer cette date ?', 'Elle sera retirée de ta liste.', 'Supprimer', () => { S.dates = S.dates.filter(d => d.id !== el.dataset.id); save(); renderDates(); }, true); },
+  addReward(){
+    const label = $('#rwLabel').value.trim(), target = num($('#rwTarget').value), kind = $('#rwKind').value;
+    if (!label || isNaN(target) || target <= 0) { toast('Donne un nom et un objectif positif.'); return; }
+    const r = {id:uid(), label, kind, target, claimed:null, notified:false};
+    const st = stats(); if ((kind === 'euros' ? st.euros : st.days) >= target) r.notified = true;
+    S.custom.push(r); save(); $('#rwLabel').value = ''; $('#rwTarget').value = ''; renderTrophies(); toast('Récompense ajoutée.');
+  },
+  claimReward(el){ const r = S.custom.find(x => x.id === el.dataset.id); if (r) { r.claimed = now(); save(); renderTrophies(); confetti(); chime(); toast('Profites-en bien.'); } },
+  delReward(el){ confirmDlg('Supprimer cette récompense ?', 'Elle sera retirée de ta liste.', 'Supprimer', () => { S.custom = S.custom.filter(x => x.id !== el.dataset.id); save(); renderTrophies(); }, true); },
+  preset(el){ const p = PRESETS[+el.dataset.i]; S.themeCustom = {bg:p.bg, a:p.a, b:p.b}; save(); applyTheme(); renderCustomTheme(); },
+  sendChat,
+  clearChat(){ confirmDlg('Effacer la conversation ?', 'Elle sera supprimée de cet appareil.', 'Effacer', () => { S.chat = []; save(); renderChat(); }, true); },
+  importUsage(){ $('#usageFile').click(); },
+  export(){
+    const blob = new Blob([JSON.stringify(S, null, 2)], {type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `souffle-sauvegarde-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  },
+  import(){ $('#importFile').click(); },
+  resetAll(){
+    openDialog({title:'Tout effacer ?', html:`<p>Ton compteur, ton journal, tes trophées et tes réglages seront supprimés. C'est définitif.</p>
+      <label for="rsConfirm">Tape EFFACER pour confirmer<input id="rsConfirm" type="text" autocomplete="off"></label>`,
+      actions:[{label:'Annuler', cls:'quiet'}, {label:'Tout effacer', cls:'danger', fn:() => {
+        if ($('#rsConfirm').value.trim().toUpperCase() !== 'EFFACER') { toast('Tape EFFACER pour confirmer.'); return false; }
+        try { ['startDate', 'journal', 'moodLog', KEY].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+        location.reload();
+      }}]});
+  }
+};
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-action]');
+  if (el && actions[el.dataset.action]) actions[el.dataset.action](el);
+});
+$$('[data-tab]').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+$('#cvDone').addEventListener('click', doneCraving);
+$('#cvClose').addEventListener('click', closeCraving);
+$('#chatText').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); sendChat(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && cv) closeCraving(); });
+
+/* ---------- Démarrage ---------- */
+function renderAll(){ renderHome(); renderTab(tab); }
+let ticks = 0;
+setInterval(() => {
+  ticks++; updateHero(); checkUnlocks();
+  if (ticks % 30 === 0) { if (tab === 'body') renderBody(); if (tab === 'trophies') renderTrophies(); if (tab === 'home') renderHomeDates(); }
+}, 1000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { updateHero(); checkUnlocks(); } });
+
+load(); applyTheme(); bindSettings();
+if (!S.seen) { S.seen = reachedIds(); }
+save();
+const h0 = location.hash.slice(1);
+showTab(TABS.includes(h0) ? h0 : 'home');
+
+/* Hooks de test (inoffensifs) */
+window.__souffle = {parseUsage, mix, contrast, ensure};
+})();
+</script>
+</body>
+</html>
